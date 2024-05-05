@@ -114,7 +114,7 @@ fn read_val_int(inout buf: FileBuf) -> Int:
         var data = buf.data.offset(buf.get_offset()).bitcast[DType.int32]()
         var result = data.load(0)
         buf.move_offset(4)
-        return result.to_int()
+        return int(result)
     except:
         print("Error reading int from tokenizer file")
         return 0
@@ -545,7 +545,7 @@ struct Matrix[dtype: DType]:
             var weight_simd_dtype = weight_simd.cast[dtype]()
             self._data.store[width=width](index, weight_simd_dtype)
 
-        vectorize[init_weights_fn, 1](self.size().to_int())
+        vectorize[init_weights_fn, 1](int(self.size()))
 
     fn init_weights_normal(inout self, mean: float_base, std: float_base):
         var mean_val = mean.cast[DType.float64]()
@@ -558,7 +558,7 @@ struct Matrix[dtype: DType]:
             var weight_simd_dtype = weight_simd.cast[dtype]()
             self._data.store[width=width](index, weight_simd_dtype)
 
-        vectorize[init_weights_normal_fn, 1](self.size().to_int())
+        vectorize[init_weights_normal_fn, 1](int(self.size()))
 
     fn init_weights_seed(inout self, seed_val: Int = 0):
         if seed_val == 0:
@@ -572,7 +572,7 @@ struct Matrix[dtype: DType]:
             var weight_simd_dtype = weight_simd.cast[dtype]()
             self._data.store[width=width](index, weight_simd_dtype)
 
-        vectorize[init_weights_random_fn, 1](self.size().to_int())
+        vectorize[init_weights_random_fn, 1](int(self.size()))
 
     fn rescale(inout self, old_scale: Tuple, new_scale: Tuple, clamp: Bool = False) -> Matrix[dtype]:
         var old_min = Tuple.get[0, Int](old_scale)
@@ -589,7 +589,7 @@ struct Matrix[dtype: DType]:
             var new_val = new_val_float.cast[dtype]()
             new_matrix._data.store[width=simd_width](index, new_val)
 
-        vectorize[rescale_fn, simd_width](self.size().to_int())
+        vectorize[rescale_fn, simd_width](int(self.size()))
 
         if clamp:
             new_matrix = new_matrix.clamp(new_min, new_max)
@@ -731,7 +731,7 @@ struct Matrix[dtype: DType]:
             var val_long = val.cast[DType.float64]()
             new_matrix._data.store[width=width](index, val_long)
 
-        vectorize[to_long_fn, simd_width](self.size().to_int())
+        vectorize[to_long_fn, simd_width](int(self.size()))
         return new_matrix
 
 
@@ -744,7 +744,7 @@ struct Matrix[dtype: DType]:
             var val_float32 = val.cast[DType.float32]()
             new_matrix._data.store[width=width](index, val_float32)
 
-        vectorize[to_float_fn, simd_width](self.size().to_int())
+        vectorize[to_float_fn, simd_width](int(self.size()))
         return new_matrix
 
     fn __adjust_Slice__(self, inout span: Slice, dim: Int) -> Slice:
@@ -786,7 +786,7 @@ struct Matrix[dtype: DType]:
             var val_cosine = cos[float_dtype, 1](val_simd)
             new_matrix._data.store[width=1](index, val_cosine)
 
-        vectorize[cosine_fn, 1](self.size().to_int())
+        vectorize[cosine_fn, 1](int(self.size()))
         return new_matrix
 
     fn sine(inout self) -> Matrix[float_dtype]:
@@ -799,7 +799,7 @@ struct Matrix[dtype: DType]:
             var val_sine = sin[float_dtype, 1](val_simd)
             new_matrix._data.store[width=width](index, val_sine)
 
-        vectorize[sine_fn, 1](self.size().to_int())
+        vectorize[sine_fn, 1](int(self.size()))
         return new_matrix
 
     fn load[simd_width: Int](self, z: Int, y: Int, x: Int) -> SIMD[dtype, simd_width]:
@@ -1140,7 +1140,7 @@ struct Matrix[dtype: DType]:
     fn exp(self)  -> Self:
         var new_matrix = Self(self.dim0, self.dim1, self.dim2)
         new_matrix.__copyinit__(self)
-        var new_matrix_size = new_matrix.size().to_int()
+        var new_matrix_size = int(new_matrix.size())
 
         @parameter
         fn exp_fn[simd_width: Int](index: Int) -> None:
@@ -1155,7 +1155,7 @@ struct Matrix[dtype: DType]:
     fn sqrt(self)  -> Self:
         var new_matrix = Self(self.dim0, self.dim1, self.dim2)
         new_matrix.__copyinit__(self)
-        var new_matrix_size = new_matrix.size().to_int()
+        var new_matrix_size = int(new_matrix.size())
 
         @parameter
         fn sqrt_fn[simd_width: Int](index: Int) -> None:
@@ -1170,7 +1170,7 @@ struct Matrix[dtype: DType]:
     fn __mul__(self, y: float_base)  -> Self:
         var new_matrix = Self(self.dim0, self.dim1, self.dim2)
         new_matrix.__copyinit__(self)
-        var new_matrix_size = new_matrix.size().to_int()
+        var new_matrix_size = int(new_matrix.size())
 
         @parameter
         fn mul_fn[simd_width: Int](index: Int) -> None:
@@ -1189,12 +1189,12 @@ struct Matrix[dtype: DType]:
             var computed_val = self._data.load[width=simd_width](index).__mul__(y_simd)
             self._data.store[width=simd_width](index, computed_val)
 
-        vectorize[mul_fn, simd_width](self.size().to_int())
+        vectorize[mul_fn, simd_width](int(self.size()))
 
     fn __pow__(self, y: float_base)  -> Self:
         var new_matrix = Self(self.dim0, self.dim1, self.dim2)
         new_matrix.__copyinit__(self)
-        var new_matrix_size = new_matrix.size().to_int()
+        var new_matrix_size = int(new_matrix.size())
 
         @parameter
         fn pow_fn[simd_width: Int](index: Int) -> None:
@@ -1213,7 +1213,7 @@ struct Matrix[dtype: DType]:
             var computed_val = self._data.load[width=simd_width](index).__pow__(y_simd)
             self._data.store[width=simd_width](index, computed_val)
 
-        vectorize[pow_fn, simd_width](self.size().to_int())
+        vectorize[pow_fn, simd_width](int(self.size()))
 
     fn __sub__(self, other: Self) -> Self:
         if self.dim0 != other.dim0 or self.dim1 != other.dim1 or self.dim2 != other.dim2:
@@ -1245,7 +1245,7 @@ struct Matrix[dtype: DType]:
     fn __add__(self, y: float_base)  -> Self:
         var new_matrix = Self(self.dim0, self.dim1, self.dim2)
         new_matrix.__copyinit__(self)
-        var new_matrix_size = new_matrix.size().to_int()
+        var new_matrix_size = int(new_matrix.size())
 
         @parameter
         fn add_fn[simd_width: Int](index: Int) -> None:
@@ -1291,7 +1291,7 @@ struct Matrix[dtype: DType]:
             var computed_val = self._data.load[width=simd_width](index).__add__(y_simd)
             self._data.store[width=simd_width](index, computed_val)
 
-        vectorize[add_fn, simd_width](self.size().to_int())
+        vectorize[add_fn, simd_width](int(self.size()))
 
     fn __isub__(self, y: float_base) -> None:
         @parameter
@@ -1300,7 +1300,7 @@ struct Matrix[dtype: DType]:
             var computed_val = self._data.load[width=simd_width](index).__add__(-y_simd)
             self._data.store[width=simd_width](index, computed_val)
 
-        vectorize[sub_fn, simd_width](self.size().to_int())
+        vectorize[sub_fn, simd_width](int(self.size()))
 
     fn __truediv__(self, other: Self) -> Self:
         if self.dim0 != other.dim0 or self.dim1 != other.dim1 or self.dim2 != other.dim2:
@@ -1332,7 +1332,7 @@ struct Matrix[dtype: DType]:
     fn __truediv__(self, y: float_base)  -> Self:
         var new_matrix = Self(self.dim0, self.dim1, self.dim2)
         new_matrix.__copyinit__(self)
-        var new_matrix_size = new_matrix.size().to_int()
+        var new_matrix_size = int(new_matrix.size())
 
         @parameter
         fn div_fn[simd_width: Int](index: Int) -> None:
@@ -1355,12 +1355,12 @@ struct Matrix[dtype: DType]:
             )
             self._data.store[width=simd_width](index, computed_val)
 
-        vectorize[div_fn, simd_width](self.size().to_int())
+        vectorize[div_fn, simd_width](int(self.size()))
 
     fn sum(self) -> SIMD[dtype, 1]:
         var sum_simd = SIMD[dtype, 1].splat(0.0)
 
-        for index in range(self.size().to_int()):
+        for index in range(int(self.size())):
             sum_simd += self._data.load[width=1](index)
 
         return sum_simd
@@ -1374,7 +1374,7 @@ struct Matrix[dtype: DType]:
         var sum = self.sum()
         var sq_sum = SIMD[dtype, 1].splat(0.0)
 
-        for i in range(self.size().to_int()):
+        for i in range(int(self.size())):
             sq_sum += (self._data.load[width=1](i) - mean) ** 2
 
         return math.sqrt(sq_sum / self.size().cast[dtype]())
@@ -1453,7 +1453,7 @@ struct Matrix[dtype: DType]:
             var computed_val = val.max(min_simd).min(max_simd)
             new_matrix._data.store[width=simd_width](index, computed_val)
 
-        vectorize[clamp_fn, simd_width, unroll_factor=simd_width](self.size().to_int())
+        vectorize[clamp_fn, simd_width, unroll_factor=simd_width](int(self.size()))
 
         return new_matrix
 
@@ -1541,7 +1541,7 @@ struct Matrix[dtype: DType]:
 
             new_matrix[new_z, new_y, new_x] = self[z, y, x]
 
-        vectorize[transpose_fn, 1, unroll_factor=1](self.size().to_int())
+        vectorize[transpose_fn, 1, unroll_factor=1](int(self.size()))
 
         return new_matrix
 
@@ -1749,13 +1749,13 @@ struct Conv2D:
         var width = conv_matrix.dim2
         var stride_y = Tuple.get[0, Int](self.stride)
         var stride_x = Tuple.get[1, Int](self.stride)
-        var final_height = math.floor(
+        var final_height = int(math.floor(
             (height - self.kernel_size) / stride_y + 1
-        ).to_int()
+        ))
 
-        var final_width = math.floor(
+        var final_width = int(math.floor(
             (width - self.kernel_size) / stride_x + 1
-        ).to_int()
+        ))
 
         var output =
             Matrix[float_dtype](self.out_channels, final_height, final_width)
@@ -1826,7 +1826,7 @@ struct GroupNorm:
     ) -> None:
         self.num_groups = num_groups
         self.num_channels = num_channels
-        self.channels_per_group = math.floor(num_channels / num_groups).to_int()
+        self.channels_per_group = int(math.floor(num_channels / num_groups))
         self.epsilon = epsilon
 
         ### LEARNABLE PARAMETERS
@@ -1897,7 +1897,7 @@ struct SiLU:
             var x_idx = x._data.load[width=simd_width](idx)
             matrix._data.store[width=simd_width](idx, x_idx / (1 + math.exp(-x_idx)))
 
-        vectorize[vec_sigmoid, simd_width, unroll_factor=simd_width](matrix.size().to_int())
+        vectorize[vec_sigmoid, simd_width, unroll_factor=simd_width](int(matrix.size()))
 
         return matrix
 
@@ -1914,7 +1914,7 @@ struct Gelu:
             var cdf = 0.5 * (1 + math.tanh((math.sqrt[float_dtype, 1](2 / pi) * (x_idx + 0.044715 * x_idx ** 3))))
             matrix._data.store[width=simd_width](idx, x_idx * cdf)
 
-        vectorize[vec_gelu, simd_width, unroll_factor=simd_width](matrix.size().to_int())
+        vectorize[vec_gelu, simd_width, unroll_factor=simd_width](int(matrix.size()))
 
         return matrix
 
